@@ -1,0 +1,26 @@
+{
+    "name": "gify-parse",
+    "version": "1.0.3",
+    "author": "Jonas Havers <jonas.havers@gmail.com>",
+    "description": "An API for parsing information on (animated) GIF files.",
+    "main": "./gify-parse",
+    "bin": {
+        "gifyParse": "./gify-parse-cli.js"
+    },
+    "dependencies": {
+        "commander": "latest",
+        "jdataview": "latest"
+    },
+    "homepage": "https://github.com/JonasHavers/node-gify-parse",
+    "repository": {
+        "type": "git",
+        "url": "git://github.com/JonasHavers/node-gify-parse.git"
+    },
+    "keywords": [
+        "gif",
+        "decoder",
+        "parser",
+        "animation",
+        "animated"
+    ]
+}
