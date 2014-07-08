@@ -2,7 +2,7 @@
 A Node.JS module for parsing information on (animated) GIF files.
 
 ## Notes
-**gify-parse** is a fork of [gify](https://github.com/rfrench/gify) 1.0 by [rfrench](https://github.com/rfrench/) to simply provide a Node.JS module and command-line interface.
+**gify-parse** is a fork of [gify](https://github.com/rfrench/gify) by [rfrench](https://github.com/rfrench/) that is intended to encapsulate the logic into a Node.JS module and to provide a command-line interface.
 
 ## Installation
 
