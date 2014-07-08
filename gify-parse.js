@@ -51,26 +51,35 @@ var gifyParse = (function () {
         }, 0);
     }
 
-    function getSubBlockSize(view, pos) {
-        var totalSize = 0;
+    function readSubBlock(view, pos, read) {
+        var subBlock = {
+            data: '',
+            size: 0
+        };
+
         while (true) {
-            var size = view.getUint8(pos + totalSize, true);
+            var size = view.getUint8(pos + subBlock.size, true);
             if (size === 0) {
-                totalSize++;
+                subBlock.size++;
                 break;
             }
-            else {
-                totalSize += size + 1;
+            if (read) {
+                subBlock.data += view.getString(size, pos + subBlock.size + 1);
             }
+            subBlock.size += size + 1;
         }
-        return totalSize;
+
+        return subBlock;
     }
 
-    function getImageTemplate() {
+    function getNewImage() {
         return {
+            identifier: '0',
             localPalette: false,
             localPaletteSize: 0,
             interlace: false,
+            comments: [],
+            text: '',
             left: 0,
             top: 0,
             width: 0,
@@ -81,7 +90,7 @@ var gifyParse = (function () {
     }
 
     function getInfo(sourceArrayBuffer, quickPass) {
-        var pos = 0, size = 0, paletteSize = 0, image;
+        var pos = 0, index = 0, unpackedField, subBlock;
 
         var info = {
             valid: false,
@@ -121,7 +130,7 @@ var gifyParse = (function () {
         info.valid = true;
 
         // parse global palette
-        var unpackedField = getBitArray(view.getUint8(10, true));
+        unpackedField = getBitArray(view.getUint8(10, true));
         if (unpackedField[0]) {
             var globalPaletteSize = getPaletteSize(unpackedField);
             info.globalPalette = true;
@@ -130,6 +139,7 @@ var gifyParse = (function () {
         }
         pos += 13;
 
+        var image = getNewImage();
         while (true) {
             try {
                 var block = view.getUint8(pos, true);
@@ -138,7 +148,7 @@ var gifyParse = (function () {
                     case 0x21: // EXTENSION BLOCK
                         var type = view.getUint8(pos + 1, true);
 
-                        if (type === 0xF9) { // GRAPHICS CONTROL
+                        if (type === 0xF9) { //GRAPHICS CONTROL EXTENSION
                             var length = view.getUint8(pos + 2);
                             if (length === 4) {
 
@@ -148,22 +158,17 @@ var gifyParse = (function () {
                                     info.isBrowserDuration = true;
                                 }
 
+                                // http://nullsleep.tumblr.com/post/16524517190/animated-gif-minimum-frame-delay-browser-compatibility (out of date)
+                                image.delay = delay;
                                 info.duration += delay;
-
-                                // http://nullsleep.tumblr.com/post/16524517190/animated-gif-minimum-frame-delay-browser-compatibility
-                                // this might be outdated
                                 info.durationIE += (delay < 60) ? defaultDelay : delay;
-                                info.durationSafari += (delay < 60) ? defaultDelay : delay;
+                                info.durationSafari += (delay < 20) ? defaultDelay : delay;
                                 info.durationChrome += (delay < 20) ? defaultDelay : delay;
                                 info.durationFirefox += (delay < 20) ? defaultDelay : delay;
                                 info.durationOpera += (delay < 20) ? defaultDelay : delay;
 
-                                // set image delay
-                                image = getImageTemplate();
-                                image.delay = delay;
-
                                 // set disposal method
-                                var unpackedField = getBitArray(view.getUint8(pos + 3));
+                                unpackedField = getBitArray(view.getUint8(pos + 3));
                                 var disposal = unpackedField.slice(3, 6).join('');
                                 image.disposal = parseInt(disposal, 2);
 
@@ -174,26 +179,36 @@ var gifyParse = (function () {
                             }
                         }
                         else {
-                            if (type === 0xFF) { // AEB
-                                // get loop count
-                                info.loopCount = view.getUint8(pos + 16, true);
+                            pos += 2;
+                            subBlock = readSubBlock(view, pos, true);
+                            switch (type) {
+                                case 0xFF: //APPLICATION EXTENSION
+                                    info.loopCount = view.getUint8(pos + 16, true);
+                                    break;
+                                case 0xCE: //NAME
+                                    /* the only reference to this extension I could find was in
+                                     gifsicle. I'm not sure if this is something gifsicle just
+                                     made up or if this actually exists outside of this app */
+                                    image.identifier = subBlock.data;
+                                    break;
+                                case 0xFE: //COMMENT EXTENSION
+                                    image.comments.push(subBlock.data);
+                                    break;
+                                case 0x01: //PLAIN TEXT EXTENSION
+                                    image.text = subBlock.data;
+                                    break;
                             }
 
-                            // CEB, PTEB, ETC
-                            pos += 2;
-                            pos += getSubBlockSize(view, pos);
+                            pos += subBlock.size;
                         }
                         break;
                     case 0x2C: // IMAGE DESCRIPTOR
-                        if (!image) {
-                            image = getImageTemplate();
-                        }
                         image.left = view.getUint16(pos + 1, true);
                         image.top = view.getUint16(pos + 3, true);
                         image.width = view.getUint16(pos + 5, true);
                         image.height = view.getUint16(pos + 7, true);
 
-                        var unpackedField = getBitArray(view.getUint8(pos + 9, true));
+                        unpackedField = getBitArray(view.getUint8(pos + 9, true));
                         if (unpackedField[0]) {
                             // local palette?
                             var localPaletteSize = getPaletteSize(unpackedField);
@@ -209,12 +224,15 @@ var gifyParse = (function () {
 
                         // add image & reset object
                         info.images.push(image);
-                        image = null;
+                        index++;
+
+                        //create new image
+                        image = getNewImage();
+                        image.identifier = index.toString();
 
                         // set animated flag
                         if (info.images.length > 1 && !info.animated) {
                             info.animated = true;
-
                             // quickly bail if the gif has more than one image
                             if (quickPass) {
                                 return info;
@@ -222,7 +240,8 @@ var gifyParse = (function () {
                         }
 
                         pos += 11;
-                        pos += getSubBlockSize(view, pos);
+                        subBlock = readSubBlock(view, pos, false);
+                        pos += subBlock.size;
                         break;
                     case 0x3B: // TRAILER BLOCK (THE END)
                         return info;
@@ -235,14 +254,11 @@ var gifyParse = (function () {
                 info.valid = false;
                 return info;
             }
-
             // this shouldn't happen, but if the trailer block is missing, we should bail at EOF
             if ((pos) >= sourceArrayBuffer.byteLength) {
                 return info;
             }
         }
-
-        return info;
     }
 
     return {

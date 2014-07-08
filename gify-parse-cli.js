@@ -28,8 +28,10 @@
     var program = require('commander');
 
     var gifyParse = require('./gify-parse');
+    var version = JSON.parse(fs.readFileSync('./package.json', 'UTF-8')).version;
 
     program
+        .version(version)
         .usage('<file> [option]')
         .option('-p, --property', 'get a specific property from the information object (use the dot-notation to step into)')
         .parse(process.argv);

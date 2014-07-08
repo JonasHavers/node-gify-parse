@@ -22,7 +22,6 @@ or
 
   Usage inside your Node.JS modules:
 
-    ```javascript
     var fs = require('fs');
     var gifyParse = require('gify-parse');
     
@@ -30,7 +29,6 @@ or
     var gifInfo = gifyParse.getInfo(buffer);
     
     console.log(gifInfo);
-    ```
     
   Usage of the CLI (command-line interface):
   
@@ -42,10 +40,10 @@ or
     $ gifyParse test.gif -p duration
     $ gifyParse test.gif -p images.0.delay
   
-The examples above parse the file test.gif and prints the GIF file's information to the console. 
+The examples above parse the file test.gif and print out the GIF file's information on the console. 
 
 ## Requirements
-**gify-parse** requires 
+**gify-parse** requires
 * [jDataView](https://github.com/vjeux/jDataView) for reading binary files,
 * [commander.js](https://github.com/visionmedia/commander.js/) for the CLI.
 

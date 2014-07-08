@@ -1,6 +1,6 @@
 {
     "name": "gify-parse",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "author": "Jonas Havers <jonas.havers@gmail.com>",
     "description": "An API for parsing information on (animated) GIF files.",
     "main": "./gify-parse",
