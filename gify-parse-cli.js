@@ -2,8 +2,6 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2014, Jonas Havers <jonas.havers@gmail.com>
- *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -25,33 +23,24 @@
 (function () {
     var fs = require('fs');
     var path = require('path');
-
     var program = require('commander');
-
     var gifyParse = require('./gify-parse');
-    var version = JSON.parse(fs.readFileSync(path.join(__dirname,  './package.json'), 'UTF-8')).version;
-
+    var version = JSON.parse(fs.readFileSync(path.join(__dirname, './package.json'), 'UTF-8')).version;
     program
         .version(version)
         .usage('<file> [option]')
         .option('-p, --property', 'get a specific property from the information object (use the dot-notation to step into)')
         .parse(process.argv);
-
     var argv = process.argv.slice(2);
-
     if (argv.length === 0) {
         program.help();
     }
-
     var fileName = String(argv[0]);
-
     if (fileName.charAt(0) === '-') {
         console.error('Provide a file as first argument.');
         program.help();
     }
-
     function handlePropertyArgument(argv, info) {
-
         function getPropertyKey(argv) {
             var argKey;
             for (argKey in argv) {
@@ -68,7 +57,6 @@
                 }
             }
         }
-
         function getPropertyValue(info, propKey) {
             var propValue;
             if (propKey.indexOf('.') === -1) {
@@ -84,13 +72,10 @@
             }
             return propValue;
         }
-
         var propKey = getPropertyKey(argv);
         var propValue = getPropertyValue(info, propKey);
-
         console.log(propValue);
     }
-
     fs.readFile(fileName, function (err, data) {
         if (err) {
             console.error('Error reading file: %s\n(%s)', fileName, err);
