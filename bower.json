@@ -22,7 +22,7 @@
   "dependencies": {
     "jdataview": "^2.5.0"
   },
-  "license": "Do What The Fuck You Want To Public License",
+  "license": "MIT",
   "ignore": [
     "**/.*",
     "node_modules",
