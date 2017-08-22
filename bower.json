@@ -1,6 +1,6 @@
 {
   "name": "gify-parse",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "homepage": "https://github.com/JonasHavers/node-gify-parse",
   "description": "An API for parsing information on (animated) GIF files",
   "main": "./gify-parse.js",
